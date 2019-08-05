@@ -17,7 +17,7 @@ sf_user = 'nwayn@certasun.com'
 sf_pass = 'Meerkat3250'
 sf_consumer_key = '3MVG9vrJTfRxlfl7JrAPVnSBJscooRaBSEHaV0RU0Nh26ID0am9ZyHz5wQ99NhDv_uBXnw9lUy6rsXLa0byTU'
 sf_consumerr_secret = 'F851D4F3EAA855D44D1A0B3FC543053B26FB333A212A444EDF13528CF755854D'
-sf_token = 'LXaurDjGHUkmaAtU4fHwySPL'
+sf_token = 'eRwTg1P6YhnNSjEl1VqZGzCu6'
 @application.route('/pvwatts', methods =['GET', 'POST'])
 def pvwatts():
     if request.method == "GET":
