@@ -70,3 +70,8 @@ def pvwatts():
             summation = summation + ac_annual
     sf.project__c.update(proj_ID, {'Year_1_PV_Watts_Prod_Est_kWh__c': summation})
     return '', 200
+
+
+
+if __name__ == '__main__':
+    application.run(debug=True)
