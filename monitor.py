@@ -24,7 +24,7 @@ def pvwatts():
         return "GET"
     if request.method == "POST":
         proj_ID = request.json['id']
-    sf = Salesforce(sf_user +".plaidtest", sf_pass, sf_token, domain = 'test')
+    sf = Salesforce(sf_user, sf_pass, sf_token)
     #query = sf.query("select ID from project__c where name = 'test'")
     #proj_ID = query['records'][0]['Id']
     query = sf.query("select Name, ID, (select MailingAddress from contacts) from account where ID IN (select Account__c from project__c where project__c.Id  = '"+proj_ID+"')")
