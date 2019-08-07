@@ -28,10 +28,7 @@ def pvwatts():
         proj_ID = request.json['id']
         print(proj_ID)
     sf = Salesforce(sf_user_sand, sf_pass, sf_sandbox_token, domain = 'test')
-    #query = sf.query("select ID from project__c where name = 'test'")
-    #proj_ID = query['records'][0]['Id']
     query = sf.query("select Name, ID, (select MailingAddress from contacts) from account where ID IN (select Account__c from project__c where project__c.Id  = '"+proj_ID+"')")
-    pp.pprint(query)
     if query['records'][0]['Contacts']['totalSize'] == 0:
         return '', 404
     street = query['records'][0]['Contacts']['records'][0]['MailingAddress']['street']
@@ -54,7 +51,6 @@ def pvwatts():
                             'Modules': query1['records'][0]['Array_'+str(i+1)+"_Modules__c"]}
         solar_arrays.append(solar_array_dict)
     summation = 0
-    pp.pprint(solar_arrays)
     for row in solar_arrays:
         tilt = row['Tilt']
         azimuth = row['Azimuth']
@@ -74,7 +70,7 @@ def pvwatts():
             json =  r.json()
             ac_annual = json['outputs']['ac_annual']
             summation = summation + ac_annual
-    #sf.project__c.update(proj_ID, {'Year_1_PV_Watts_Prod_Est_kWh__c': summation})
+    sf.project__c.update(proj_ID, {'Year_1_PV_Watts_Prod_Est_kWh__c': summation})
     return '', 200
 
 
