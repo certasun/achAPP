@@ -1,0 +1,28 @@
+trigger pvwattsAutomation on Project__c (after update, after insert) {
+    if (Trigger.isAfter){
+        if(Trigger.isUpdate){
+
+    for (Id newItem : trigger.newMap.keySet()){
+        project__c[] pp = [select Id from project__c where Id = :newItem];
+        if(trigger.oldMap.get(newItem).Array_1_Azimuth__c != trigger.newMap.get(newItem).Array_1_Azimuth__c || trigger.oldMap.get(newItem).Array_2_Azimuth__c != trigger.newMap.get(newItem).Array_2_Azimuth__c || trigger.oldMap.get(newItem).Array_3_Azimuth__c != trigger.newMap.get(newItem).Array_3_Azimuth__c || trigger.oldMap.get(newItem).Array_4_Azimuth__c != trigger.newMap.get(newItem).Array_4_Azimuth__c || trigger.oldMap.get(newItem).Array_5_Azimuth__c != trigger.newMap.get(newItem).Array_5_Azimuth__c || trigger.oldMap.get(newItem).Array_6_Azimuth__c != trigger.newMap.get(newItem).Array_6_Azimuth__c){
+        	pvwattscallout.makePostCallout(newItem);
+        }
+        if(trigger.oldMap.get(newItem).Array_1_Tilt__c != trigger.newMap.get(newItem).Array_1_Tilt__c || trigger.oldMap.get(newItem).Array_2_Tilt__c != trigger.newMap.get(newItem).Array_2_Tilt__c || trigger.oldMap.get(newItem).Array_3_Tilt__c != trigger.newMap.get(newItem).Array_3_Tilt__c || trigger.oldMap.get(newItem).Array_4_Tilt__c != trigger.newMap.get(newItem).Array_4_Tilt__c || trigger.oldMap.get(newItem).Array_5_Tilt__c != trigger.newMap.get(newItem).Array_5_Tilt__c || trigger.oldMap.get(newItem).Array_6_Tilt__c != trigger.newMap.get(newItem).Array_6_Tilt__c){
+        	pvwattscallout.makePostCallout(newItem);
+        }
+        if(trigger.oldMap.get(newItem).Array_1_Modules__c != trigger.newMap.get(newItem).Array_1_Modules__c || trigger.oldMap.get(newItem).Array_2_Modules__c != trigger.newMap.get(newItem).Array_2_Modules__c || trigger.oldMap.get(newItem).Array_3_Modules__c != trigger.newMap.get(newItem).Array_3_Modules__c || trigger.oldMap.get(newItem).Array_4_Modules__c != trigger.newMap.get(newItem).Array_4_Modules__c || trigger.oldMap.get(newItem).Array_5_Modules__c != trigger.newMap.get(newItem).Array_5_Modules__c || trigger.oldMap.get(newItem).Array_6_Modules__c != trigger.newMap.get(newItem).Array_6_Modules__c){
+        	pvwattscallout.makePostCallout(newItem);
+        }
+        if(trigger.oldMap.get(newItem).Array_1_Module_DC_W__c != trigger.newMap.get(newItem).Array_1_Module_DC_W__c || trigger.oldMap.get(newItem).Array_2_Module_DC_W__c != trigger.newMap.get(newItem).Array_2_Module_DC_W__c || trigger.oldMap.get(newItem).Array_3_Module_DC_W__c != trigger.newMap.get(newItem).Array_3_Module_DC_W__c || trigger.oldMap.get(newItem).Array_4_Module_DC_W__c != trigger.newMap.get(newItem).Array_4_Module_DC_W__c || trigger.oldMap.get(newItem).Array_5_Module_DC_W__c != trigger.newMap.get(newItem).Array_5_Module_DC_W__c || trigger.oldMap.get(newItem).Array_6_Module_DC_W__c != trigger.newMap.get(newItem).Array_6_Module_DC_W__c){
+        	pvwattscallout.makePostCallout(newItem);
+        }
+	}
+        }
+        if(Trigger.isInsert){
+            for(Project__c newItem: trigger.new){
+                if(newItem.Array_1_Module_DC_W__c != null){
+                    pvwattscallout.makePostCallout(newItem.Id);
+                }
+            }
+        }
+            }}

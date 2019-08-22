@@ -29,6 +29,8 @@ def pvwatts():
         print(proj_ID)
     sf = Salesforce(sf_user_sand, sf_pass, sf_sandbox_token, domain = 'test')
     query = sf.query("select Name, ID, (select MailingAddress from contacts) from account where ID IN (select Account__c from project__c where project__c.Id  = '"+proj_ID+"')")
+    if query['totalSize'] == 0:
+        return '', 300
     if query['records'][0]['Contacts']['totalSize'] == 0:
         return '', 404
     street = query['records'][0]['Contacts']['records'][0]['MailingAddress']['street']
