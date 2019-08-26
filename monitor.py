@@ -15,11 +15,13 @@ pp = pprint.PrettyPrinter(indent=1)
 application = Flask(__name__)
 sf_user = 'nwayn@certasun.com'
 sf_user_sand = 'nwayn@certasun.com.plaidtest'
+sf_user_sand_update = 'nwayn@certasun.com.updatedSan'
 sf_pass = 'Meerkat3250'
 sf_consumer_key = '3MVG9vrJTfRxlfl7JrAPVnSBJscooRaBSEHaV0RU0Nh26ID0am9ZyHz5wQ99NhDv_uBXnw9lUy6rsXLa0byTU'
 sf_consumerr_secret = 'F851D4F3EAA855D44D1A0B3FC543053B26FB333A212A444EDF13528CF755854D'
 sf_token = 'eRwTg1P6YhnNSjEl1VqZGzCu6'
 sf_sandbox_token = 'LXaurDjGHUkmaAtU4fHwySPL'
+sf_update_san_token = 'MRkY20HRIBUTBbTM5U58eezT'
 @application.route('/pvwatts', methods =['GET', 'POST'])
 def pvwatts():
     if request.method == "GET":
@@ -27,8 +29,9 @@ def pvwatts():
     if request.method == "POST":
         proj_ID = request.json['id']
         print(proj_ID)
-    sf = Salesforce(sf_user_sand, sf_pass, sf_sandbox_token, domain = 'test')
+    sf = Salesforce(sf_user_sand_update, sf_pass, sf_update_san_token, domain = 'test')
     query = sf.query("select Name, ID, (select MailingAddress from contacts) from account where ID IN (select Account__c from project__c where project__c.Id  = '"+proj_ID+"')")
+    pp.pprint(query)
     if query['totalSize'] == 0:
         return '', 300
     if query['records'][0]['Contacts']['totalSize'] == 0:
