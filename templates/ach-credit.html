@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<style>
+.main {
+  margin-left: 140px; /* Same width as the sidebar + left position in px */
+  font-size: 28px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+}
+</style>
+<head>
+  <script>
+  function toDollars(nondollar){
+    if( nondollar != 0){
+      var stripeshowPayment = nondollar.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+      return stripeshowPayment;
+    }
+  }
+</script>
+<script>
+if({{charge_fee}} == 1){
+  var credit_total = {{payment}}* 1.03;
+}
+else{var credit_total = {{payment}};}
+</script>
+<script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+<style>
+  div.text_failure{
+    color : red
+  }
+  span.text_failure{
+    color : red;
+  }
+  button {
+    display: inline-block;
+    border-radius: 4px;
+    background-color: #F9942F;
+    border: none;
+    color: #FFFFFF;
+    text-align: center;
+    font-size: 14px;
+    padding: 10px;
+    width: 200px;
+    height: 50px;
+    transition: all 0.5s;
+    cursor: pointer;
+    margin: 5px;
+  }
+  button span {
+    cursor: pointer;
+    display: inline-block;
+    position: relative;
+    transition: 0.5s;
+  }
+  button span:after {
+    content: '\00bb';
+    position: absolute;
+    opacity: 0;
+    top: 0;
+    right: -20px;
+    transition: 0.5s;
+  }
+  button:hover span {
+    padding-right: 25px;
+  }
+  button:hover span:after {
+    opacity: 1;
+    right: 0;
+  }
+  button:hover {
+    box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
+  }
+  .bd-placeholder-img {
+    font-size: 1.125rem;
+    text-anchor: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  @media (min-width: 768px) {
+    .bd-placeholder-img-lg {
+    font-size: 3.5rem;
+    }
+  }
+  .StripeElement {
+    box-sizing: border-box;
+    height: 40px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 40px;
+    background-color: white;
+    box-shadow: 0 1px 3px 0 #e6ebf1;
+    -webkit-transition: box-shadow 150ms ease;
+    transition: box-shadow 150ms ease;
+  }
+  .StripeElement--focus {
+    box-shadow: 0 1px 3px 0 #cfd7df;
+  }
+  .StripeElement--invalid {
+    border-color: #fa755a;
+  }
+  .StripeElement--webkit-autofill {
+    background-color: #fefde5 !important;
+  }
+  #radio_br{
+            display: block; /* makes it have a width */
+            content: ""; /* clears default height */
+            margin-top: 10px; /* change this to whatever height you want it */
+  }
+  #ACHFORM{
+    display:none;
+  }
+  #creditForm{
+    display:none;
+  }
+  #validateForm{
+    display:none;
+  }
+  #linkButton{
+    display:none;
+  }
+  #loaderImg{
+    display:none;
+  }
+  #returnButton{
+    display:none;
+  }
+  #tryagain{
+    display:none;
+  }
+</style>
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  var stripe = Stripe('pk_test_5PPWDFa356A5VTg8k3qXKIQE');
+  var elements = stripe.elements();
+</script>
+</head>
+  <body class="bg-light">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 order-md-2 mb-4">
+          <h4 class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted">Your Payment Profile</span>
+          </h4>
+          <ul class="list-group mb-3">
+            <li class="list-group-item d-flex justify-content-between lh-condensed">
+              <div>
+                <h6 class="my-0">Down Payment</h6>
+                <small class="text-muted">{{accountobj.dpSTAT}}</small>
+              </div>
+              <span class="text-muted" id = "dp_dollar"></span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between lh-condensed">
+              <div>
+                <h6 class="my-0">Permit Payment</h6>
+                <small class="text-muted">{{accountobj.ppSTAT}}</small>
+              </div>
+              <span class="text-muted" id = "pp_dollar"></span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between lh-condensed">
+              <div>
+                <h6 class="my-0">Final Payment</h6>
+                <small class="text-muted">{{accountobj.fpSTAT}}</small>
+              </div>
+              <span class="text-muted" id = "fp_dollar">{{accountobj.fp}}</span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between">
+              <span>Payment Due Today (USD)</span>
+              <strong id = "due_today">{{payment}}</strong>
+            </li>
+            <li class="list-group-item d-flex justify-content-between bg-light">
+              <div class="text_failure">
+                <h6 class="my-0">Credit Card Convienience Fee</h6>
+                <small></small>
+              </div>
+              <span class="text_failure" id = "credit_service_fee"></span>
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-8 order-md-1">
+          <h4 class="mb-3">Account Info</h4>
+          <form class="needs-validation" novalidate>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class = "font-weight-bold" for="firstName">First name</label>
+                <input type="text" class="form-control-plaintext" id="firstName" placeholder="{{accountobj.fname}}" value="{{accountobj.fname}}" readonly>
+                <div class="invalid-feedback">
+                  Valid first name is required.
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="font-weight-bold" for="lastName">Last name</label>
+                <input type="text" class="form-control-plaintext" id="lastName" placeholder= "{{accountobj.lname}}" value="{{accountobj.lname}}" readonly>
+                <div class="invalid-feedback">
+                  Valid last name is required.
+                </div>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class = "font-weight-bold" for="address">Address</label>
+              <input type="text" class="form-control-plaintext" id="address" placeholder="{{location['street'] + ' ' + location['city'] + ', ' + location['state']}}"  value = "{{location['street'] + ' ' + location['city'] + ', ' + location['state']}}"  readonly>
+              <div class="invalid-feedback">
+                Please enter your shipping address.
+              </div>
+            </div>
+            <h4 class="mb-3">Electronic Payment Options</h4>
+            <h4 class = "mb-3" id = "tryAgain"></h4>
+              <div class="d-block my-3" id = "payment_radio">
+                <div class="custom-control custom-radio">
+                  <input id="debit" name="paymentMethod" type="radio" class="custom-control-input" value = "ACH" required checked>
+                  <label class="custom-control-label" for="debit">Electronic Funds Transfer (Fast, Easy, Free)</label>
+                </div>
+                <br id = "radio_br">
+                <div class="custom-control custom-radio" id = "radio_id">
+                  <input id="credit" name="paymentMethod" type="radio" class="custom-control-input" vakue = "credit" required>
+                  <label class="custom-control-label" for="credit">Credit card - 3% Convienience Fee (Waived for Down Payment)</label>
+                </div>
+              </div>
+            </form>
+              <div class = "container" align = "center">
+              <form action = "javascript: achForm();" method  = "post" id = "ACHFORM">
+                <div class = "form-row">
+                  <div class = "form-group col-md-6">
+                    <label for = "routing">Routing Number</label>
+                    <input type = "password" class = "form-control" id = 'routing' placeholder="XXXXXXXXX">
+                  </div>
+                  <div class = "form-group col-md-6">
+                    <label for = "banking">Account Number</label>
+                    <input type = "password" class = "form-control" id = 'banking' placeholder = "XXXXXXXXXXXX">
+                  </div>
+                </div>
+                  <button type = "submit" align = "center" class = "btn btn-primary text-center">Submit</button>
+              </form>
+            </div>
+            <div class = "container" align = "center" id = "creditForm">
+              <form action="/charge" method="post" id="payment-form">
+                <div id="card-element">
+                  <div id="card-errors" role="alert"></div>
+                </div>
+                <br>
+                <button id = "stripeButton"  class = "btn btn-primary btn-lg "><span id = "sbid"></span></button>
+              </form>
+              <script>
+              var show_Stripe_amount = toDollars(credit_total);
+              document.getElementById("sbid").innerHTML = "Pay $" + show_Stripe_amount;
+              </script>
+            </div>
+          </div>
+      </div>
+        <div class = "container" align = "center" id = "loaderImg">
+          <img src = 'https://media.giphy.com/media/10kTz4r3ishQwU/giphy.gif'/>
+          <br>
+            </div>
+              <a href = "http://certasun.com"><button id ='returnButton' class = "btn btn-primary btn-lg btn-block"><span>Return to CertaSun</span></button></a>
+              <p id = "mail_to_text" class = "mb-1 text-center">Or mail a check wrote out to Certasun for ${{payment}} to 1582 Barclay Blvd, Buffalo Grove, IL 60089</p>
+        </div>
+      </div>
+      <footer class="my-5 pt-5 text-muted text-center text-small">
+        <p class="mb-1">&copy; 2019 Certasun</p>
+      </footer>
+    </div>
+    <script>
+    if({{accountobj.dp}} == 0.0){
+      var dp_dollars = 0.0;
+    }else{
+      var dp_dollars = toDollars({{accountobj.dp}});
+    }
+    if({{accountobj.pp}} == 0.0){
+      var pp_dollars = 0.0;
+    }else{
+      var pp_dollars = toDollars({{accountobj.pp}});
+    }
+    if({{accountobj.fp}} == 0.0){
+      var fp_dollars = 0.0;
+    }
+    else{
+      var fp_dollars = toDollars({{accountobj.fp}});
+    }
+    if({{payment}} == 0.0){
+      due_payment_dollars = 0.0;
+    }else {
+    var due_payment_dollars = toDollars({{payment}});
+    }
+    if( {{payment}} == 0){
+        var credit_service_fee = 0.00;
+    }
+    else if ({{charge_fee}} == 0 ){
+        var credit_service_fee = 0.00;
+    }
+    else{
+      var credit_service_fee = toDollars({{payment}}*0.03);
+    }
+    document.getElementById("dp_dollar").innerHTML =  "$" + dp_dollars;
+    document.getElementById("pp_dollar").innerHTML =  "$" + pp_dollars;
+    document.getElementById("fp_dollar").innerHTML =  "$" + fp_dollars;
+    document.getElementById("credit_service_fee").innerHTML =  "$" + credit_service_fee;
+    document.getElementById("due_today").innerHTML = "$" + due_payment_dollars;
+    if({{payment}}>0){
+      document.getElementById("mail_to_text").innerHTML = "Or mail a check wrote out to Certasun for $"+due_payment_dollars+" to 1582 Barclay Blvd, Buffalo Grove, IL 60089"
+    }
+    else{
+      document.getElementById("mail_to_text").innerHTML = " "
+    }
+    </script>
+    </body>
+    <script type = "text/javascript">
+    jQuery(document).ready(function () {
+      if({{payment}} == 0){
+        jQuery("#ACHFORM").hide();
+        jQuery("#creditForm").hide();
+        jQuery("#returnButton").show();
+      }
+      else{
+      jQuery("#ACHFORM").show();
+      jQuery("#credit").click(function () {
+        jQuery("#creditForm").show();
+        jQuery("#ACHFORM").hide();
+      });
+      jQuery("#debit").click(function () {
+        jQuery("#creditForm").hide();
+        jQuery("#ACHFORM").show();
+      });
+    }});
+    </script>
+    <script>
+        $("#creditForm").ready(function(){
+          var style = {
+          base: {
+          color: '#32325d',
+          fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+          fontSmoothing: 'antialiased',
+          fontSize: '16px',
+          '::placeholder': {
+            color: '#aab7c4'
+          }
+          },
+          invalid: {
+          color: '#fa755a',
+          iconColor: '#fa755a'
+          }
+          };
+          var card = elements.create('card', {style: style});
+          card.mount('#card-element');
+         card.addEventListener('change', function(event) {
+          var displayError = document.getElementById('card-errors');
+          if (event.error) {
+          displayError.textContent = event.error.message;
+          } else {
+          displayError.textContent = '';
+          }
+          });
+         var form = document.getElementById('payment-form');
+          form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          stripe.createToken(card).then(function(result) {
+          if (result.error) {
+            var errorElement = document.getElementById('card-errors');
+            errorElement.textContent = result.error.message;
+          } else {
+            stripeTokenHandler(result.token);
+          }
+          });
+          });
+          function stripeTokenHandler(token) {
+          var form = document.getElementById('payment-form');
+          var hiddenInput = document.createElement('input');
+          hiddenInput.setAttribute('type', 'hidden');
+          hiddenInput.setAttribute('name', 'stripeToken');
+          hiddenInput.setAttribute('value', token.id);
+          var amount = document.createElement('input');
+          amount.setAttribute('type', 'hidden');
+          amount.setAttribute('name', 'amount');
+          if({{charge_fee}} == 1){
+          amount.setAttribute('value', {{payment}}*103);
+          }
+          else{
+          amount.setAttribute('value', {{payment}}*100)
+          }
+          var description = document.createElement('input');
+          description.setAttribute('type', 'hidden');
+          description.setAttribute('name', 'description');
+          description.setAttribute('value', "{{accountobj.name}}" + " Payment for " + "{{accountobj.duePayment}}")
+          var email = document.createElement('input');
+          email.setAttribute('type',  'hidden');
+          email.setAttribute('name', 'email');
+          email.setAttribute('value', "{{email}}");
+          var payType = document.createElement('input');
+          payType.setAttribute('type', 'hidden');
+          payType.setAttribute('name', 'payType');
+          payType.setAttribute('value', "{{accountobj.duePayment}}");
+          var proj_ID = document.createElement('input');
+          proj_ID.setAttribute('type', 'hidden');
+          proj_ID.setAttribute('name', 'proj_ID');
+          proj_ID.setAttribute('value', "{{accountobj.ID}}")
+          form.appendChild(hiddenInput);
+          form.appendChild(amount);
+          form.appendChild(description);
+          form.appendChild(email);
+          form.appendChild(payType);
+          form.appendChild(proj_ID)
+          form.submit();
+          $('#creditForm').hide();
+          $('#loaderImg').show();
+          }
+        });
+    </script>
+    <script>
+        function achForm() {
+          $.post('/ach', {
+            routing : document.getElementById('routing').value,
+            banking : document.getElementById('banking').value,
+            proj_ID : "{{accountobj.ID}}",
+            beforeSend:function(){
+              $('#loaderImg').show();
+              $('#ACHFORM').hide();
+            }
+          }).done(function() {
+            window.location.replace('/thanks')
+          })
+          .fail(function(){
+            $("#loaderImg").hide();
+            $("#ACHFORM").show();
+            $("#tryagain").show();
+          })
+        }
+    </script>
+</html>
