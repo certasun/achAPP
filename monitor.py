@@ -15,12 +15,12 @@ pp = pprint.PrettyPrinter(indent=1)
 application = Flask(__name__)
 sf_user = 'nwayn@certasun.com'
 sf_user_sand = 'nwayn@certasun.com.plaidtest'
-sf_user_sand_update = 'nwayn@certasun.com.updatedSan'
 sf_pass = 'Meerkat3250'
 sf_consumer_key = '3MVG9vrJTfRxlfl7JrAPVnSBJscooRaBSEHaV0RU0Nh26ID0am9ZyHz5wQ99NhDv_uBXnw9lUy6rsXLa0byTU'
 sf_consumerr_secret = 'F851D4F3EAA855D44D1A0B3FC543053B26FB333A212A444EDF13528CF755854D'
 sf_token = 'eRwTg1P6YhnNSjEl1VqZGzCu6'
 sf_sandbox_token = 'LXaurDjGHUkmaAtU4fHwySPL'
+sf_user_sand_update = 'nwayn@certasun.com.updatedSan'
 sf_update_san_token = 'MRkY20HRIBUTBbTM5U58eezT'
 @application.route('/pvwatts', methods =['GET', 'POST'])
 def pvwatts():
