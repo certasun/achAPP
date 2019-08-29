@@ -48,6 +48,8 @@ else{var credit_total = {{payment}};}
     transition: all 0.5s;
     cursor: pointer;
     margin: 5px;
+    height : 50%;
+    width : 35%;
   }
   button span {
     cursor: pointer;
@@ -132,6 +134,22 @@ else{var credit_total = {{payment}};}
   #tryagain{
     display:none;
   }
+  #ach_radio_save_label{
+    color : green;
+    margin-left: 10px;
+  }
+  #routing_num_error{
+    color : red;
+    display: none;
+  }
+  #banking_num_error{
+    color : red;
+    display : none;
+  }
+  #mail_to_text{
+    font-size : small;
+  }
+
 </style>
 <script src="https://js.stripe.com/v3/"></script>
 <script>
@@ -142,37 +160,37 @@ else{var credit_total = {{payment}};}
   <body class="bg-light">
     <div class="container">
       <div class="row">
-        <div class="col-md-4 order-md-2 mb-4">
+        <div class="col-md-4 order-md-2 mb-4 h-100 d-inline-block">
           <h4 class="d-flex justify-content-between align-items-center mb-3">
             <span class="text-muted">Your Payment Profile</span>
           </h4>
-          <ul class="list-group mb-3">
-            <li class="list-group-item d-flex justify-content-between lh-condensed">
+          <ul class="list-group mb-5 h-100">
+            <li class="list-group-item d-flex justify-content-between lh-condensed h-100">
               <div>
                 <h6 class="my-0">Down Payment</h6>
                 <small class="text-muted">{{accountobj.dpSTAT}}</small>
               </div>
               <span class="text-muted" id = "dp_dollar"></span>
             </li>
-            <li class="list-group-item d-flex justify-content-between lh-condensed">
+            <li class="list-group-item d-flex justify-content-between lh-condensed h-100">
               <div>
                 <h6 class="my-0">Permit Payment</h6>
                 <small class="text-muted">{{accountobj.ppSTAT}}</small>
               </div>
               <span class="text-muted" id = "pp_dollar"></span>
             </li>
-            <li class="list-group-item d-flex justify-content-between lh-condensed">
+            <li class="list-group-item d-flex justify-content-between lh-condensed h-100">
               <div>
                 <h6 class="my-0">Final Payment</h6>
                 <small class="text-muted">{{accountobj.fpSTAT}}</small>
               </div>
               <span class="text-muted" id = "fp_dollar">{{accountobj.fp}}</span>
             </li>
-            <li class="list-group-item d-flex justify-content-between">
-              <span>Payment Due Today (USD)</span>
+            <li class="list-group-item d-flex justify-content-between h-100">
+              <span>Due Today (USD)</span>
               <strong id = "due_today">{{payment}}</strong>
             </li>
-            <li class="list-group-item d-flex justify-content-between bg-light">
+            <li class="list-group-item d-flex justify-content-between bg-light h-100">
               <div class="text_failure">
                 <h6 class="my-0">Credit Card Convienience Fee</h6>
                 <small></small>
@@ -212,7 +230,7 @@ else{var credit_total = {{payment}};}
               <div class="d-block my-3" id = "payment_radio">
                 <div class="custom-control custom-radio">
                   <input id="debit" name="paymentMethod" type="radio" class="custom-control-input" value = "ACH" required checked>
-                  <label class="custom-control-label" for="debit">Electronic Funds Transfer (Fast, Easy, Free)</label>
+                  <label class="custom-control-label" for="debit" id = "ach_radio_label">Electronic Funds Transfer (Fast, Easy, Free)</label><label id = "ach_radio_save_label"></label>
                 </div>
                 <br id = "radio_br">
                 <div class="custom-control custom-radio" id = "radio_id">
@@ -225,16 +243,23 @@ else{var credit_total = {{payment}};}
               <form action = "javascript: achForm();" method  = "post" id = "ACHFORM">
                 <div class = "form-row">
                   <div class = "form-group col-md-6">
+
+                    <label id = "routing_num_error"> INVALID </label>
                     <label for = "routing">Routing Number</label>
-                    <input type = "password" class = "form-control" id = 'routing' placeholder="XXXXXXXXX">
+                    <input type = "password" class = "form-control" id = 'routing' placeholder="XXXXXXXXX" maxlength = "9">
                   </div>
                   <div class = "form-group col-md-6">
+
+                    <label id ="banking_num_error"> INVALID </label>
                     <label for = "banking">Account Number</label>
-                    <input type = "password" class = "form-control" id = 'banking' placeholder = "XXXXXXXXXXXX">
+                    <input type = "password" class = "form-control" id = 'banking' placeholder = "XXXXXXXXXXXX" maxlength = "18">
                   </div>
                 </div>
-                  <button type = "submit" align = "center" class = "btn btn-primary text-center">Submit</button>
+                  <button type = "submit" align = "center" class = "text-center et_pb_button et_pb_more_button et_pb_button_1" style = "border-radius: 30px"><span>Submit</span></button>
               </form>
+            </div>
+            <div align = "center">
+              <a href = "https://certasun.com"><button id ='returnButton' align = "center" class = "text-center et_pb_button et_pb_more_button et_pb_button_1" style = "border-radius: 30px"><span>Return to Certasun</span></button></a>
             </div>
             <div class = "container" align = "center" id = "creditForm">
               <form action="/charge" method="post" id="payment-form">
@@ -242,7 +267,7 @@ else{var credit_total = {{payment}};}
                   <div id="card-errors" role="alert"></div>
                 </div>
                 <br>
-                <button id = "stripeButton"  class = "btn btn-primary btn-lg "><span id = "sbid"></span></button>
+                <button id = "stripeButton"  class = "text-center et_pb_button et_pb_more_button et_pb_button_1" style = "border-radius: 30px"><span id = "sbid"></span></button>
               </form>
               <script>
               var show_Stripe_amount = toDollars(credit_total);
@@ -255,7 +280,7 @@ else{var credit_total = {{payment}};}
           <img src = 'https://media.giphy.com/media/10kTz4r3ishQwU/giphy.gif'/>
           <br>
             </div>
-              <a href = "http://certasun.com"><button id ='returnButton' class = "btn btn-primary btn-lg btn-block"><span>Return to CertaSun</span></button></a>
+
               <p id = "mail_to_text" class = "mb-1 text-center">Or mail a check wrote out to Certasun for ${{payment}} to 1582 Barclay Blvd, Buffalo Grove, IL 60089</p>
         </div>
       </div>
@@ -319,10 +344,14 @@ else{var credit_total = {{payment}};}
       jQuery("#credit").click(function () {
         jQuery("#creditForm").show();
         jQuery("#ACHFORM").hide();
+        if(credit_service_fee > 0){
+        document.getElementById("ach_radio_save_label").innerHTML = " Save $" + credit_service_fee;
+      }
       });
       jQuery("#debit").click(function () {
         jQuery("#creditForm").hide();
         jQuery("#ACHFORM").show();
+        document.getElementById("ach_radio_save_label").innerHTML = " "
       });
     }});
     </script>
@@ -410,6 +439,11 @@ else{var credit_total = {{payment}};}
     </script>
     <script>
         function achForm() {
+          var routing_number = document.forms['ACHFORM']['routing'].value;
+          if (routing_number.length != 9){
+            $("#routing_num_error").show();
+          }
+          else{
           $.post('/ach', {
             routing : document.getElementById('routing').value,
             banking : document.getElementById('banking').value,
@@ -425,7 +459,8 @@ else{var credit_total = {{payment}};}
             $("#loaderImg").hide();
             $("#ACHFORM").show();
             $("#tryagain").show();
-          })
+          })}
         }
     </script>
+
 </html>
