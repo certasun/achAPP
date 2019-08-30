@@ -16,6 +16,15 @@ import os
 import pprint
 import stripe
 import requests
+from email.utils import make_msgid
+from flask_mail import Mail, Message
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.headerregistry import Address
+from email.message import EmailMessage
+from email.mime.image import MIMEImage
+
 application = Flask(__name__)
 application.config['SECRET_KEY'] = "5791628bb0b13ce0c676dfde280ba245"
 mail_settings = {
@@ -215,6 +224,196 @@ def pvwatts():
     #sf.project__c.update(proj_ID, {'Year_1_PV_Watts_Prod_Est_kWh__c': summation})
     print(summation)
     return '', 200
+
+
+@application.route('/displayEmail/<id>', methods = ['GET', 'POST'])
+def displayemail(id):
+
+        sf = Salesforce(app_settings['SF-USER'] +".plaidtest", app_settings['SF-PASS'], app_settings['SF-TOKEN'], domain = 'test')
+        # get the email belonging to the contact for whom the project is for
+        contact_query = sf.query("select Name, ID, (select name, email, MailingAddress from contacts) from account where ID IN (select Account__c from project__c where project__c.Id  = '"+id+"')")
+        #link that will be sent in the email in order for the customer to go to payment portal
+        email_link = "https://certasunpay.com/linkwithid/" + id
+        templateLoader = jinja2.FileSystemLoader(searchpath = "/")
+        templateEnv = jinja2.Environment(loader=templateLoader)
+        ### get the rest of the data from the project in order to format the templated email
+        query = sf.query("select id, Name, Cash_Down_Pmt_Status__c, Cash_Down_Pmt__c, Cash_Permit_Pmt_Status__c, Permit_Pmt__c, Cash_Final_Pmt_Status__c, Cash_final_Pmt__c from Project__c where ID =  '"+id+"'")
+        #project down payment:
+        p_down = query['records'][0]['Cash_Down_Pmt__c']
+        #project down payment status:
+        p_down_stat = query['records'][0]['Cash_Down_Pmt_Status__c']
+        #project permit payment:
+        p_permit = query['records'][0]['Permit_Pmt__c']
+        #project permit payment status:
+        p_permit_stat = query['records'][0]['Cash_Permit_Pmt_Status__c']
+        #project final payment:
+        p_final = query['records'][0]['Cash_Final_Pmt__c']
+        #project final payment status:
+        p_final_stat = query['records'][0]['Cash_Final_Pmt_Status__c']
+        #concatonate a string to show the customers address
+        address = str(contact_query['records'][0]['Contacts']['records'][0]['MailingAddress']['street']) + " " + str(contact_query['records'][0]['Contacts']['records'][0]['MailingAddress']['city']) + ", " + str(contact_query['records'][0]['Contacts']['records'][0]['MailingAddress']['state'])
+        #Name of contact whom project belongs to:
+        contact_name = contact_query['records'][0]['Contacts']['records'][0]['Name']
+        #split the contact name to get first and last seperate
+        contact_name_list = contact_name.split()
+        #create an ACCOUNT object for this project
+        email_recipient_account = ACCOUNT(contact_query['records'][0]['Name'], contact_name_list[0], contact_name_list[1])
+        #set the objects down payment:
+        email_recipient_account.dp = p_down
+        #set objects down payment status:
+        email_recipient_account.dpSTAT = setFrontEndStatus(p_down_stat)
+        #set objects permit payment:
+        email_recipient_account.pp = p_permit
+        #set objects permit payment status:
+        email_recipient_account.ppSTAT = setFrontEndStatus(p_permit_stat)
+        #set objects final payment:
+        email_recipient_account.fp = p_final
+        #set objects final payment status:
+        email_recipient_account.fpSTAT = setFrontEndStatus(p_final_stat)
+        #use getDuePayment method to find out which payment will need to be paid next with logic in that method
+        duepayment = email_recipient_account.getDuePayment()
+        #use getnextpayment to get the value of the duepayment
+        next_payment = email_recipient_account.getnextpayment()
+        #locale is used to format currency
+        locale.setlocale(locale.LC_ALL,'en_US.UTF-8')
+        #format the next_payment from a float to a currency string
+        next_payment = locale.currency(next_payment)
+        #### create id's to reference images that will be embedded in email
+        logoImage_cid = make_msgid()
+        bg1Image_cid = make_msgid()
+        facebook_cid = make_msgid()
+        twitter_cid = make_msgid()
+        ig_cid = make_msgid()
+        #############
+        #create the templated email
+        html = render_template('emailtemplate1.html', name = contact_name, chargeAmount = next_payment, duePayment = duepayment, payment_link = email_link, address = address, logoImage_cid = logoImage_cid[1:-1], bg1Image_cid = bg1Image_cid[1:-1], facebook_cid = facebook_cid[1:-1]) #, twitter_cid = twitter_cid[1:-1], ig_cid = ig_cid[1:-1])
+        #instantiate an EmailMessage OBject
+        msg = EmailMessage()
+        #Email's subject:
+        msg['Subject'] = 'Pay Certasun'
+        #Email address message will be sent from
+        msg['From'] = app_settings['OUTLOOK_ADDRESS']#mail_settings['MAIL_USERNAME']
+            ############# change back but for testing send to my email ###################
+        #Address Email will be sent to
+        msg['To'] = "wayno5650@gmail.com"#email
+        #############################################################################
+        #Email messages preamble
+        msg.preamble = "Certasun"
+        #set the plain text as an empty string
+        msg.set_content("")
+        #set the templated html of the message
+        msg.add_alternative(html, subtype = 'html')
+        ############# Embed the images into the email msg###################
+        with open('static/img/CertasunLogo.png', 'rb') as fp:
+            msg.get_payload()[1].add_related(fp.read(), 'image','png',cid=logoImage_cid)
+        with open('static/img/bg1.png', 'rb') as fp:
+            msg.get_payload()[1].add_related(fp.read(), 'image', 'png', cid = bg1Image_cid)
+        with open('static/img/free_ico_facebook.jpg', 'rb') as fp:
+            msg.get_payload()[1].add_related(fp.read(), 'image', 'jpg', cid = facebook_cid)
+
+        return render_template('emailtemplate1.html', name = contact_name, chargeAmount = next_payment, duePayment = duepayment, payment_link = email_link, address = address, logoImage_cid = logoImage_cid[1:-1], bg1Image_cid = bg1Image_cid[1:-1], facebook_cid = facebook_cid[1:-1])
+
+@application.route('/displayEmail2/<id>', methods = ['GET', 'POST'])
+def displayemail2(id):
+
+        sf = Salesforce(app_settings['SF-USER'] +".plaidtest", app_settings['SF-PASS'], app_settings['SF-TOKEN'], domain = 'test')
+        # get the email belonging to the contact for whom the project is for
+        contact_query = sf.query("select Name, ID, (select name, email, MailingAddress from contacts) from account where ID IN (select Account__c from project__c where project__c.Id  = '"+id+"')")
+        #link that will be sent in the email in order for the customer to go to payment portal
+        email_link = "https://certasunpay.com/linkwithid/" + id
+        templateLoader = jinja2.FileSystemLoader(searchpath = "/")
+        templateEnv = jinja2.Environment(loader=templateLoader)
+        ### get the rest of the data from the project in order to format the templated email
+        query = sf.query("select id, Name, Cash_Down_Pmt_Status__c, Cash_Down_Pmt__c, Cash_Permit_Pmt_Status__c, Permit_Pmt__c, Cash_Final_Pmt_Status__c, Cash_final_Pmt__c from Project__c where ID =  '"+id+"'")
+        #project down payment:
+        p_down = query['records'][0]['Cash_Down_Pmt__c']
+        #project down payment status:
+        p_down_stat = query['records'][0]['Cash_Down_Pmt_Status__c']
+        #project permit payment:
+        p_permit = query['records'][0]['Permit_Pmt__c']
+        #project permit payment status:
+        p_permit_stat = query['records'][0]['Cash_Permit_Pmt_Status__c']
+        #project final payment:
+        p_final = query['records'][0]['Cash_Final_Pmt__c']
+        #project final payment status:
+        p_final_stat = query['records'][0]['Cash_Final_Pmt_Status__c']
+        #concatonate a string to show the customers address
+        address = str(contact_query['records'][0]['Contacts']['records'][0]['MailingAddress']['street']) + " " + str(contact_query['records'][0]['Contacts']['records'][0]['MailingAddress']['city']) + ", " + str(contact_query['records'][0]['Contacts']['records'][0]['MailingAddress']['state'])
+        #Name of contact whom project belongs to:
+        contact_name = contact_query['records'][0]['Contacts']['records'][0]['Name']
+        #split the contact name to get first and last seperate
+        contact_name_list = contact_name.split()
+        #create an ACCOUNT object for this project
+        email_recipient_account = ACCOUNT(contact_query['records'][0]['Name'], contact_name_list[0], contact_name_list[1])
+        #set the objects down payment:
+        email_recipient_account.dp = p_down
+        #set objects down payment status:
+        email_recipient_account.dpSTAT = setFrontEndStatus(p_down_stat)
+        #set objects permit payment:
+        email_recipient_account.pp = p_permit
+        #set objects permit payment status:
+        email_recipient_account.ppSTAT = setFrontEndStatus(p_permit_stat)
+        #set objects final payment:
+        email_recipient_account.fp = p_final
+        #set objects final payment status:
+        email_recipient_account.fpSTAT = setFrontEndStatus(p_final_stat)
+        #use getDuePayment method to find out which payment will need to be paid next with logic in that method
+        duepayment = email_recipient_account.getDuePayment()
+        #use getnextpayment to get the value of the duepayment
+        next_payment = email_recipient_account.getnextpayment()
+        #locale is used to format currency
+        locale.setlocale(locale.LC_ALL,'en_US.UTF-8')
+        #format the next_payment from a float to a currency string
+        next_payment = locale.currency(next_payment)
+        #### create id's to reference images that will be embedded in email
+        logoImage_cid = make_msgid()
+        bg1Image_cid = make_msgid()
+        facebook_cid = make_msgid()
+        twitter_cid = make_msgid()
+        ig_cid = make_msgid()
+        #############
+        #create the templated email
+        html = render_template('emailtemplate1.html', name = contact_name, chargeAmount = next_payment, duePayment = duepayment, payment_link = email_link, address = address, logoImage_cid = logoImage_cid[1:-1], bg1Image_cid = bg1Image_cid[1:-1], facebook_cid = facebook_cid[1:-1]) #, twitter_cid = twitter_cid[1:-1], ig_cid = ig_cid[1:-1])
+        display_html = render_template("email2.html",  name = contact_name, chargeAmount = next_payment, duePayment = duepayment, payment_link = email_link, address = address)
+        with open("my_new_file.html", "w") as fh:
+            fh.write(display_html)
+        os.system('my_new_file.html')
+        my_input = input('Do you want to send this email (Y/N)')
+        if(my_input == 'Y' or my_input = 'y'):
+            #instantiate an EmailMessage OBject
+            msg = EmailMessage()
+            #Email's subject:
+            msg['Subject'] = 'Pay Certasun'
+            #Email address message will be sent from
+            msg['From'] = 'IT@certasun.com'#mail_settings['MAIL_USERNAME']
+                ############# change back but for testing send to my email ###################
+            #Address Email will be sent to
+            msg['To'] = "wayno5650@gmail.com"#email
+            #############################################################################
+            #Email messages preamble
+            msg.preamble = "Certasun"
+            #set the plain text as an empty string
+            msg.set_content("")
+            #set the templated html of the message
+            msg.add_alternative(html, subtype = 'html')
+            ############# Embed the images into the email msg###################
+            with open('static/img/CertasunLogo.png', 'rb') as fp:
+                msg.get_payload()[1].add_related(fp.read(), 'image','png',cid=logoImage_cid)
+            with open('static/img/bg1.png', 'rb') as fp:
+                msg.get_payload()[1].add_related(fp.read(), 'image', 'png', cid = bg1Image_cid)
+            with open('static/img/free_ico_facebook.jpg', 'rb') as fp:
+                msg.get_payload()[1].add_related(fp.read(), 'image', 'jpg', cid = facebook_cid)
+            smtp = smtplib.SMTP_SSL('smtp.gmail.com', 0)
+            smtp.ehlo()
+            #start tls which means message will be encrypted
+            #smtp.starttls()
+            #login to the AWS SES account
+            smtp.login('IT@certasun.com', 'GoSolar1')
+            #send the message, first parameter is who it is from, 2nd is who is is two and the thirsd is the content of the message
+            smtp.sendmail("nathan@certasun.com", 'wayno5650@gmail.com', msg.as_string())
+            #shutdown the connection to the smtp server
+            smtp.quit()
+        return render_template('email2.html', name = contact_name, chargeAmount = next_payment, duePayment = duepayment, payment_link = email_link, address = address, logoImage_cid = logoImage_cid[1:-1], bg1Image_cid = bg1Image_cid[1:-1], facebook_cid = facebook_cid[1:-1])
 
 #route for the main landing page where user may enter their email to access their payment portal
 @application.route('/', methods = ['GET', "POST"])
