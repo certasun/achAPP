@@ -21,7 +21,7 @@ Flask-RESTful==0.3.7
 Flask-WTF==0.14.2
 future==0.16.0
 html5lib==1.0.1
-httplib2==0.13.0
+httplib2==0.18.0
 idna==2.7
 importlib-metadata==0.19
 itsdangerous==1.1.0
